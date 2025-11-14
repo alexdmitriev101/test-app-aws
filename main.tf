@@ -100,6 +100,8 @@ resource "aws_security_group_rule" "ssh_inbound" {
   security_group_id = module.vpc.default_security_group_id
 }
 
+# =============================== EC2 ====================================
+
 module "ec2" {
   source  = "terraform-aws-modules/ec2-instance/aws"
   version = "6.1.4"
@@ -122,7 +124,7 @@ module "ec2" {
     DB_PASSWORD = aws_db_instance.postgres.password
     DB_HOST     = aws_db_instance.postgres.address
     ENV         = local.env
-    local       = local.env # ← КЛЮЧ: ПЕРЕДАЁМ local!
+    local       = local.env
   }) : null
 
   tags = {
@@ -135,6 +137,8 @@ resource "time_sleep" "wait_ec2" {
   depends_on      = [module.ec2]
   create_duration = "60s"
 }
+
+# =============================== CLOUDFRONT ====================================
 
 resource "aws_cloudfront_distribution" "cdn" {
   # --- FRONTEND ORIGIN ---
