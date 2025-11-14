@@ -1,0 +1,13 @@
+version: '3.8'
+services:
+  api:
+    image: python:3.11-slim
+    ports:
+      - "5000:5000"
+    environment:
+      - DATABASE_URL=postgresql://admin:${DB_PASSWORD}@${DB_HOST}:5432/appdb
+    volumes:
+      - ./app:/app
+    working_dir: /app
+    command: bash -c "pip install flask psycopg2-binary && python app.py"
+    restart: unless-stopped
