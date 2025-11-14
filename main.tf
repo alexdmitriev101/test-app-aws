@@ -21,9 +21,9 @@ module "vpc" {
   name = "${local.env}-vpc"
   cidr = "10.0.0.0/16"
 
-  azs              = ["${local.region}a", "${local.region}b"]
-  public_subnets   = ["10.0.101.0/24", "10.0.102.0/24"]
-  private_subnets  = ["10.0.1.0/24", "10.0.2.0/24"]
+  azs             = ["${local.region}a", "${local.region}b"]
+  public_subnets  = ["10.0.101.0/24", "10.0.102.0/24"]
+  private_subnets = ["10.0.1.0/24", "10.0.2.0/24"]
 
   enable_nat_gateway      = false
   map_public_ip_on_launch = true
@@ -63,15 +63,15 @@ resource "aws_security_group" "rds_sg" {
 }
 
 resource "aws_db_instance" "postgres" {
-  identifier           = "${local.env}-db"
-  engine               = "postgres"
-  engine_version       = "15.15"
-  instance_class       = "db.t3.micro"
-  allocated_storage    = 20
-  storage_type         = "gp3"
-  username             = "app"
-  password             = random_password.db_password.result
-  db_name              = "appdb"
+  identifier        = "${local.env}-db"
+  engine            = "postgres"
+  engine_version    = "15.15"
+  instance_class    = "db.t3.micro"
+  allocated_storage = 20
+  storage_type      = "gp3"
+  username          = "app"
+  password          = random_password.db_password.result
+  db_name           = "appdb"
 
   vpc_security_group_ids = [aws_security_group.rds_sg.id]
   db_subnet_group_name   = aws_db_subnet_group.main.name
@@ -106,23 +106,23 @@ module "ec2" {
 
   for_each = local.app_instances
 
-  name                   = "${local.env}-${each.value.role}-${each.key}"
-  instance_type          = each.value.instance_type
-  ami                    = data.aws_ami.image.id
-  subnet_id              = module.vpc.public_subnets[each.value.subnet_key]
-  vpc_security_group_ids = [module.vpc.default_security_group_id]
-  key_name               = aws_key_pair.deployer.key_name
+  name                        = "${local.env}-${each.value.role}-${each.key}"
+  instance_type               = each.value.instance_type
+  ami                         = data.aws_ami.image.id
+  subnet_id                   = module.vpc.public_subnets[each.value.subnet_key]
+  vpc_security_group_ids      = [module.vpc.default_security_group_id]
+  key_name                    = aws_key_pair.deployer.key_name
   associate_public_ip_address = true
 
   user_data = each.value.role == "frontend" ? templatefile("${path.module}/user_data/nginx.sh", {
     docker_compose = file("${path.module}/docker-compose.yml")
     html_content   = file("${path.module}/html/index.html")
     env            = local.env
-  }) : each.value.role == "backend" ? templatefile("${path.module}/user_data/backend.sh", {
+    }) : each.value.role == "backend" ? templatefile("${path.module}/user_data/backend.sh", {
     DB_PASSWORD = aws_db_instance.postgres.password
     DB_HOST     = aws_db_instance.postgres.address
     ENV         = local.env
-    local       = local.env  # ← КЛЮЧ: ПЕРЕДАЁМ local!
+    local       = local.env # ← КЛЮЧ: ПЕРЕДАЁМ local!
   }) : null
 
   tags = {
@@ -132,7 +132,7 @@ module "ec2" {
 }
 
 resource "time_sleep" "wait_ec2" {
-  depends_on = [module.ec2]
+  depends_on      = [module.ec2]
   create_duration = "60s"
 }
 
